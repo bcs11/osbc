@@ -1,0 +1,234 @@
+#include<stdio.h>
+
+struct node
+{
+  int pno,freq;
+}frames[20];
+int n;
+
+int page_found(int pno)
+{
+  int fno;
+  for(fno=0;fno<n;fno++)
+	if(frames[fno].pno==pno)
+	   return fno;
+	return -1;
+}
+
+int get_free_frame()
+{  int fno;
+  for (fno=0; fno<=n; fno++)
+	if (frames[fno].pno==-1)
+		return(fno);
+   return(-1);
+}
+
+int get_lfu_frame()
+{
+  int fno;
+  int selfno=0;
+  for (fno=1; fno<n; fno++)
+	if(frames[fno].freq<frames[selfno].freq)
+	selfno=fno;
+  return selfno;
+}
+int main()
+{
+   int p_request[]={3,4,5,4,3,4,7,2,4,5,6,7,2,4,6};
+   int size=15;
+   int page_falts=0,i,j,fno;
+   
+   printf("\nHow many frames:");  scanf("%d",&n);
+   
+   for (i=0; i<n; i++)
+   { frames[i].pno=-1;
+	 frames[i].freq=0;
+   }
+
+   printf("\nPageNo     Page Frames          	Page Fault");
+   printf("\n---------------------------------------------------");
+   for(i=0;i<size;i++)
+   {
+	 j=page_found(p_request[i]);
+	 if(j==-1)  //page fault occurs
+	 {
+	   j=get_free_frame();
+	   if (j==-1) //no free frame - do page replacement
+		 j=get_lfu_frame();
+	   page_falts++;
+	   frames[j].pno=p_request[i];
+	   frames[j].freq=1;
+	   printf("\n%4d\t ",p_request[i]);
+	   for (fno=0; fno<n; fno++)
+		 printf("%4d:%2d",frames[fno].pno,frames[fno].freq);
+	   printf(" : YES");
+	 }
+	else
+	{
+	   printf("\n%4d\t ",p_request[i]);
+	   frames[j].freq++;
+	   for (fno=0; fno<n; fno++)
+		 printf("%4d:%2d",frames[fno].pno,frames[fno].freq);
+	   printf(" : NO");
+	}
+   }
+  printf("\n-------------------------------------------------------");
+  printf("\n Number of Page_Falts=%d",page_falts);
+  getch();
+}
+###########################################################################
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <dirent.h>
+
+char comm[100],*ptr;
+char *args[10];
+int tot_arg;
+int typeline( char *option, char *fname) 
+{
+	FILE *fp;
+	int tot_lines,ch,n,cnt;
+	fp= fopen(fname,"r");
+	if( fp == NULL )
+	{
+		printf("\nUnable to open file");
+		exit(0);
+	}
+	tot_lines = 0;
+	ch = fgetc(fp);
+	while ( ch != EOF )
+	{
+		if( ch == 10 ) 
+		tot_lines++;
+		ch = fgetc(fp);
+	}
+	fclose(fp);
+	
+	if( strcmp(option,"a")== 0 ) 
+	{
+		fp= fopen(fname,"r");
+		ch = fgetc(fp);
+		while ( ch != EOF )
+		{
+			printf("%c",ch);
+			ch = fgetc(fp);
+		}
+		fclose(fp);
+	}
+	else
+	if( option[0] =='+')
+	{
+		n = atoi(option+1);
+		if( n > tot_lines)
+		{	
+			printf("\nInvalid  option");
+			exit(0);
+		}
+		fp= fopen(fname,"r");
+		cnt = 0;
+		while( cnt < n )
+		{
+			ch = fgetc(fp);
+			printf("%c",ch);
+			if( ch == 10)
+				cnt++;
+		}
+		fclose(fp);
+	}
+	else
+	if( option[0] =='-') 
+	{
+		n = atoi(option+1);
+		if( n > tot_lines)
+		{	
+			printf("\nInvalid  option");
+			exit(0);
+		}
+		fp= fopen(fname,"r");
+		cnt = 0;
+		while( cnt < tot_lines -n )
+		{
+			ch = fgetc(fp);
+			if( ch == 10)
+				cnt++;
+		}
+		while( (ch=fgetc(fp)) != EOF )
+			printf("%c",ch);
+		fclose(fp);
+	}
+	else
+	{
+		printf("\nInvalid option");
+		exit(0);
+	}
+	
+	return(0);
+} 
+main()
+{
+	do
+	{
+		printf("myshell $ ");
+		getcomm();
+		sep_arg();
+		take_action();
+	}while(1);
+} 
+
+sep_arg()
+{
+	int i,j;
+	i = j = tot_arg = 0;
+
+	args[tot_arg] = (char*)malloc(sizeof(char) * 20);
+	for(i=0; comm[i] !='\0' ; i++)
+	{
+		if( comm[i] == ' ')
+		{
+			args[tot_arg][j] = '\0';
+			tot_arg++;
+			args[tot_arg] = (char*)malloc(sizeof(char) * 20);	
+			j=0;
+		}
+		else
+		{
+			args[tot_arg][j] =comm[i];
+			j++;
+		}
+	} 
+	
+	args[tot_arg][j] = '\0';
+ 	return;
+}
+
+
+
+getcomm()
+{
+	int len;
+	ptr = fgets(comm,80,stdin);
+	len = strlen(comm);
+	comm[len-1] = '\0';
+	return;
+} 
+
+take_action()
+{
+	char str[100];
+	pid_t   pid;
+	int status;
+
+	
+	if(strcmp(args[0],"typeline") == 0 )
+		typeline(args[1],args[2]);
+	else
+	if(strcmp(args[0],"quit") == 0 )
+exit(0);
+			
+}
+
+

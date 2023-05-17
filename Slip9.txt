@@ -1,0 +1,160 @@
+#include<stdio.h>
+
+int frame[3]={-1,-1,-1};
+int pg_found(int pno)
+{
+	int i;
+	for(i=0;i<3;i++)
+		if(frame[i]==pno)
+		return i;
+	return -1;
+}
+int main()
+{
+	int p_req[]={8, 5, 7, 8, 5, 7, 2, 3, 7, 3, 5, 9, 4, 6, 2};
+	int size=15,page_fault=0,i;
+	
+	printf("\n FIFO page replacement");
+	printf("\n page no  -----------------page frames");
+	printf("\n---------------------------------------");
+	for(i=0;i<size;i++)
+	{
+		if(pg_found(p_req[i])==-1)
+		{
+			frame[page_fault%3]=p_req[i];
+			page_fault++;
+			printf("\n %4d--------------------%4d%4d%4d",p_req[i],frame[0],frame[1],frame[2]);
+		}
+		else
+			printf("\n %4d.......No Page fault",p_req[i]);
+	}
+	printf("\n-------------------------------------------");
+	printf("\n Total page fault=%d",page_fault);
+	
+}
+###########################################################################
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <dirent.h>
+char comm[100],*ptr;
+char *args[10];
+int tot_arg;
+int search(char option, char *pattern, char *fname)
+{
+	char buff[100],*ptr;
+	int cnt;
+	FILE *fp;
+	int i;
+	fp= fopen(fname,"r");
+	if( fp == NULL )
+	{
+		printf("\nUnable to open file");
+		exit(0);
+	}
+	switch(option)
+	{
+	case 'a' :
+			while ( !feof (fp))
+			{
+				buff[0] = '\0';
+				fgets(buff,80,fp);
+				ptr = strstr(buff,pattern);
+				if( ptr != NULL )
+					printf("%s",buff);
+			}
+			fclose(fp);
+			break;
+	case 'c' : 
+			cnt=0;
+			while ( !feof (fp))
+			{
+				buff[0] = '\0';
+				fgets(buff,80,fp);
+				ptr = strstr(buff,pattern);
+				while(ptr != NULL )
+				{
+					cnt++;
+					ptr = ptr + strlen(pattern);
+					ptr = strstr(ptr,pattern);
+				} 
+			}
+			fclose(fp);
+			printf("\nThe serach string %s occurs %d times",pattern,cnt);
+			break;
+
+	case 'f' : 
+			while ( !feof (fp))
+			{
+				buff[0] = '\0';
+				fgets(buff,80,fp);
+				ptr = strstr(buff,pattern);
+				if( ptr != NULL )
+				{
+					printf("%s",buff);
+					break;
+				}
+			}
+			fclose(fp);
+			break;
+		} 
+	return;
+} 
+main()
+{
+	do
+	{
+		printf("myshell $ ");
+		getcomm();
+		sep_arg();
+		take_action();
+	}while(1);
+} 
+
+sep_arg()
+{
+	int i,j;
+	i = j = tot_arg = 0;
+
+	args[tot_arg] = (char*)malloc(sizeof(char) * 20);
+	for(i=0; comm[i] !='\0' ; i++)
+	{
+		if( comm[i] == ' ')
+		{
+			args[tot_arg][j] = '\0';
+			tot_arg++;
+			args[tot_arg] = (char*)malloc(sizeof(char) * 20);	
+			j=0;
+		}
+		else
+		{
+			args[tot_arg][j] =comm[i];
+			j++;
+		}
+	} 	
+	args[tot_arg][j] = '\0'; // complete last word
+ 	return;
+}
+getcomm()
+{
+	int len;
+	ptr = fgets(comm,80,stdin);
+	len = strlen(comm);
+	comm[len-1] = '\0';
+	return;
+}
+take_action()
+{
+	char str[100];
+	pid_t   pid;
+	int status;
+
+	if(strcmp(args[0],"search") == 0 )
+		search(*args[1],args[2],args[3]);
+	else
+	if(strcmp(args[0],"quit") == 0 )
+	exit(0);				
+}

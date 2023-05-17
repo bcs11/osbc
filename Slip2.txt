@@ -1,0 +1,174 @@
+#include<stdio.h>
+
+int frame[3]={-1,-1,-1};
+int pg_found(int pno)
+{
+	int i;
+	for(i=0;i<3;i++)
+		if(frame[i]==pno)
+		return i;
+	return -1;
+}
+int main()
+{
+	int p_req[]={ 3, 4, 5, 6, 3, 4, 7, 3, 4, 5, 6, 7, 2, 4, 6};
+	int size=15,page_fault=0,i;
+	
+	printf("\n FIFO page replacement");
+	printf("\n page no  -----------------page frames");
+	printf("\n---------------------------------------");
+	for(i=0;i<size;i++)
+	{
+		if(pg_found(p_req[i])==-1)
+		{
+			frame[page_fault%3]=p_req[i];
+			page_fault++;
+			printf("\n %4d--------------------%4d%4d%4d",p_req[i],frame[0],frame[1],frame[2]);
+		}
+		else
+			printf("\n %4d.......No Page fault",p_req[i]);
+	}
+	printf("\n-------------------------------------------");
+	printf("\n Total page fault=%d",page_fault);
+	
+}
+###########################################################################
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+
+char comm[100], *ptr;
+char *args[10];
+int tot_arg;
+
+int list(char option, char dirname[]);
+
+main()
+{
+    do
+    {
+        printf("myshell $ ");
+        getcomm();
+        sep_arg();
+        take_action();
+    } while (1);
+} 
+
+sep_arg()
+{
+    int i, j;
+    i = j = tot_arg = 0;
+
+    args[tot_arg] = (char *)malloc(sizeof(char) * 20);
+    for (i = 0; comm[i] != '\0'; i++)
+    {
+        if (comm[i] == ' ')
+        {
+            args[tot_arg][j] = '\0';
+            tot_arg++;
+            args[tot_arg] = (char *)malloc(sizeof(char) * 20);
+            j = 0;
+        }
+        else
+        {
+            args[tot_arg][j] = comm[i];
+            j++;
+        }
+    } 
+
+    args[tot_arg][j] = '\0'; 
+    return;
+}
+
+getcomm()
+{
+    int len;
+    ptr = fgets(comm, 80, stdin);
+    len = strlen(comm);
+    comm[len - 1] = '\0';
+    return;
+} 
+
+take_action()
+{
+    char str[100];
+    pid_t pid;
+    int status;
+
+    if (strcmp(args[0], "list") == 0)
+        list(*args[1], args[2]);
+    else if (strcmp(args[0], "quit") == 0)
+        exit(0);
+} 
+
+int list(char option, char dirname[])
+{
+    DIR *dp;
+    struct dirent *dent;
+    struct stat buff;
+    char orgdir[100];
+    int cnt, reply;
+    getcwd(orgdir, 90);
+    chdir(dirname);
+    switch (option)
+    {
+    case 'f': 
+        dp = opendir(".");
+        if (dp == NULL)
+        {
+            printf("\nUnable to open dir");
+            exit(0);
+        }
+        dent = readdir(dp);
+        while (dent != NULL)
+        {
+            printf("\n%s", dent->d_name);
+            dent = readdir(dp);
+        }
+        printf("\n");
+        break;
+    case 'n': // 
+        cnt = 0;
+        dp = opendir(".");
+        if (dp == NULL)
+        {
+            printf("\nUnable to open dir");
+            exit(0);
+        }
+        dent = readdir(dp);
+        while (dent != NULL)
+        {
+            cnt++;
+            dent = readdir(dp);
+        }
+        printf("\ntot dir entries = %d\n", cnt);
+        closedir(dp);
+        break;
+    case 'i': 
+        dp = opendir(".");
+        if (dp == NULL)
+        {
+            printf("\nUnable to open dir");
+            exit(0);
+        }
+        dent = readdir(dp);
+        while (dent != NULL)
+        {
+            reply = stat(dent->d_name, &buff);
+            if (reply < 0)
+                printf("\nError");
+            else
+                printf("\n%s %ld", dent->d_name, buff.st_ino);
+            dent = readdir(dp);
+        }
+        closedir(dp);
+        break;
+    default:
+        printf("\nInvalid option");
+        exit(0);
+    } 
+    chdir(orgdir);
+    return (0);
+}

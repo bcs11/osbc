@@ -1,0 +1,207 @@
+#include<stdio.h>
+struct node
+{
+  int pno,reftime;
+}frames[20];
+int n;
+
+int page_found(int pno)
+{
+  int fno;
+  for(fno=0;fno<n;fno++)
+	if(frames[fno].pno==pno)
+	   return fno;
+	return -1;
+}
+
+int get_free_frame()
+{  int fno;
+  for (fno=0; fno<=n; fno++)
+	if (frames[fno].pno==-1)
+		return(fno);
+   return(-1);
+}
+
+int get_lru_frame()
+{
+  int fno;
+  int selfno=0;
+  for (fno=1; fno<n; fno++)
+	if(frames[fno].reftime<frames[selfno].reftime)
+	selfno=fno;
+  return selfno;
+}
+main()
+{
+   int p_request[]={8,5,7,8,5,7,2,3,7,3,5,9,4,6,2};
+   int size=15,currtime;
+   int page_falts=0,i,j,fno;
+  
+   printf("\nHow many frames:");  scanf("%d",&n);
+   //initialize frames
+   for (i=0; i<n; i++)
+   { frames[i].pno=-1;
+	 frames[i].reftime=-1;
+   }
+
+   printf("\nPageNo     Page Frames          Page Fault");
+   printf("\n-------------------------------------------");
+   currtime=0;
+   for(i=0;i<size;i++)
+   {
+	 j=page_found(p_request[i]);
+	 if(j==-1)  //page fault occurs
+	 {
+	   j=get_free_frame();
+	   if (j==-1) //no free frame - do page replacement
+		 j=get_lru_frame();
+	   page_falts++;
+	   frames[j].pno=p_request[i];
+	   frames[j].reftime=currtime;
+	   printf("\n%4d\t ",p_request[i]);
+	   for (fno=0; fno<n; fno++)
+		 printf("%4d",frames[fno].pno);
+	   printf(" : YES");
+	 }
+	else//page found
+	{
+	   printf("\n%4d\t ",p_request[i]);
+	   frames[j].reftime=currtime;
+	   for (fno=0; fno<n; fno++)
+		 printf("%4d",frames[fno].pno);
+	   printf(" : NO");
+	}
+	   currtime++;
+   }
+  printf("\n------------------------------------------");
+  printf("\n Number of Page_Falts=%d",page_falts);
+}
+###########################################################################
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <dirent.h>
+//#include <bfd.h>
+char comm[100],*ptr;
+char *args[10];
+int tot_arg;
+int search(char option, char *pattern, char *fname)
+{
+	char buff[100],*ptr;
+	int cnt;
+	FILE *fp;
+	int i;
+	fp= fopen(fname,"r");
+	if( fp == NULL )
+	{
+		printf("\nUnable to open file");
+		exit(0);
+	}
+	switch(option)
+	{
+	case 'a' : // print all occ
+			while ( !feof (fp))
+			{
+				buff[0] = '\0';
+				fgets(buff,80,fp);
+				ptr = strstr(buff,pattern);
+				if( ptr != NULL )
+					printf("%s",buff);
+			}
+			fclose(fp);
+			break;
+	case 'c' : // count occ
+			cnt=0;
+			while ( !feof (fp))
+			{
+				buff[0] = '\0';
+				fgets(buff,80,fp);
+				ptr = strstr(buff,pattern);
+				while(ptr != NULL )
+				{
+					cnt++;
+					ptr = ptr + strlen(pattern);
+					ptr = strstr(ptr,pattern);
+				} // while
+			}
+			fclose(fp);
+			printf("\nThe serach string %s occurs %d times",pattern,cnt);
+			break;
+
+	case 'f' : //print first occ
+			while ( !feof (fp))
+			{
+				buff[0] = '\0';
+				fgets(buff,80,fp);
+				ptr = strstr(buff,pattern);
+				if( ptr != NULL )
+				{
+					printf("%s",buff);
+					break;
+				}
+			}
+			fclose(fp);
+			break;
+		} // switch
+	return;
+}//search 
+main()
+{
+	do
+	{
+		printf("myshell $ ");
+		getcomm();
+		sep_arg();
+		take_action();
+	}while(1);
+} // main
+
+sep_arg()
+{
+	int i,j;
+	i = j = tot_arg = 0;
+
+	args[tot_arg] = (char*)malloc(sizeof(char) * 20);
+	for(i=0; comm[i] !='\0' ; i++)
+	{
+		if( comm[i] == ' ')
+		{
+			args[tot_arg][j] = '\0';
+			tot_arg++;
+			args[tot_arg] = (char*)malloc(sizeof(char) * 20);	
+			j=0;
+		}
+		else
+		{
+			args[tot_arg][j] =comm[i];
+			j++;
+		}
+	} // while
+	
+	args[tot_arg][j] = '\0'; // complete last word
+ 	return;
+}
+getcomm()
+{
+	int len;
+	ptr = fgets(comm,80,stdin);
+	len = strlen(comm);
+	comm[len-1] = '\0';
+	return;
+} // getcomm
+
+take_action()
+{
+	char str[100];
+	pid_t   pid;
+	int status;
+
+	if(strcmp(args[0],"search") == 0 )
+		search(*args[1],args[2],args[3]);
+	else
+	if(strcmp(args[0],"quit") == 0 )
+	exit(0);				
+}
